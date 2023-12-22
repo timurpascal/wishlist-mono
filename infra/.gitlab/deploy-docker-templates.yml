@@ -1,0 +1,44 @@
+---
+.deploy_server:
+  image: docker:latest
+  services:
+    - docker:latest
+  variables:
+    DOCKER_DRIVER: overlay2
+    DOCKER_TLS_CERTDIR: '/certs'
+  tags:
+    - rasberry
+  before_script:
+    - docker login -u "${REGISTRY_USER}" -p "${REGISTRY_PASS}" "https://${REGISTRY_URL}"
+  script:
+    - apk update
+    - apk add curl
+    - curl --user "raw_user:${NEXUS_PASSWORD}" https://${NEXUS_URL}/repository/raw/wishlist/ci/state -o state
+    - IMAGE_VERSION=$(cat state)
+    - 'curl -XPOST ${SLACK_HOOK_URL} --data "{\"text\": \"Начинаю деплой ${APP_NAME} на ${DEPLOY_TARGET} окружение. версия = ${IMAGE_VERSION}\"}"'
+    - docker stop ${APP_NAME}-${DEPLOY_TARGET}
+    - docker rm ${APP_NAME}-${DEPLOY_TARGET}
+    - docker run -d -p 0.0.0.0:${PORT}:3000/tcp --name ${APP_NAME}-${DEPLOY_TARGET} --restart=always --env PORT=3000 --env MONGO_URL=mongo:27017 --env MONGO_DB_NAME=${MONGO_DB_NAME} --env NODE_ENV=${NODE_ENV} --env APP_GLOBAL_PREFIX='/api' --env APP_FQDN=${APP_FQDN} --network=hassio ${REGISTRY_URL}/${APP_NAME}-arm:${IMAGE_VERSION}
+    - 'curl -XPOST ${SLACK_HOOK_URL} --data "{\"text\": \"Успешно обновил ${APP_NAME} на ${DEPLOY_TARGET} окружение - актуальная версия = ${CI_COMMIT_SHORT_SHA} ✔️ \"}"'
+
+.deploy_client:
+  image: docker:latest
+  services:
+    - docker:latest
+  variables:
+    DOCKER_DRIVER: overlay2
+    DOCKER_TLS_CERTDIR: '/certs'
+  tags:
+    - rasberry
+  before_script:
+    - docker login -u "${REGISTRY_USER}" -p "${REGISTRY_PASS}" "https://${REGISTRY_URL}"
+  script:
+    - apk update
+    - apk add curl
+    - curl --user "raw_user:${NEXUS_PASSWORD}" https://${NEXUS_URL}/repository/raw/wishlist/ci/state -o state
+    - IMAGE_VERSION=$(cat state)
+    - 'curl -XPOST ${SLACK_HOOK_URL} --data "{\"text\": \"Начинаю деплой ${APP_NAME} на ${DEPLOY_TARGET} окружение, версию = ${IMAGE_VERSION}\"}"'
+    - docker stop ${APP_NAME}-${DEPLOY_TARGET}
+    - docker rm ${APP_NAME}-${DEPLOY_TARGET}
+    - docker run -d -p 0.0.0.0:${PORT}:80/tcp --name ${APP_NAME}-${DEPLOY_TARGET} --restart=always --env PORT=3000 --network=hassio ${REGISTRY_URL}/${APP_NAME}-arm:${IMAGE_VERSION}
+    - 'curl -XPOST ${SLACK_HOOK_URL} --data "{\"text\": \"Успешно обновил ${APP_NAME} на ${DEPLOY_TARGET} окружении - актуальная версия = ${CI_COMMIT_SHORT_SHA} ✔️ \"}"'

@@ -1,0 +1,11 @@
+./infra/ansible
+./etc
+./.git
+./dist
+./build
+./.vscode
+./api-docs
+./coverage
+./node_modules
+
+webpack.*.js

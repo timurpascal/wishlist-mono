@@ -1,0 +1,34 @@
+---
+.deploy-k8s-template:
+  environment:
+    name: ${K8S_CLUSTER}
+  variables:
+    K8S_CLUSTER: staging-cl1
+    PATH_TO_CHART: ${SENDED_PATH_TO_CHART}
+  stage: deploy-to-staging
+  extends: .deploy-h3
+  script:
+    - IMAGE_VERSION=$(cat .ci_status/version)
+    - helm upgrade --install ${IMAGE_PROJECT} ${PATH_TO_CHART} --set image.tag=${IMAGE_VERSION}-${CI_COMMIT_SHORT_SHA},secret.mongoPassword=${MONGO_PASSWORD},secret.mongoUser=${MONGO_USER} --values ${PATH_TO_CHART}/${VALUES_NAME} --namespace=${K8S_NAMESPACE}
+    - echo '{"Deployments":[{"ResourceName":"'${IMAGE_PROJECT}'","Namespace":"'${K8S_NAMESPACE}'"}]}' | kubedog multitrack --output-prefix=" "
+  tags:
+    - kubernetes
+    - staging
+# .deploy-to-production-template:
+#   environment:
+#     name: ${K8S_CLUSTER}
+#   variables:
+#     K8S_CLUSTER: production-cl1
+#     PATH_TO_CHART: ${SENDED_PATH_TO_CHART}
+#   stage: deploy-to-production
+#   extends: .deploy-h3
+#   script:
+#     - IMAGE_VERSION=$(cat .ci_status/version)
+#     - helm upgrade --install ${IMAGE_PROJECT} ${PATH_TO_CHART} --set image.tag=${IMAGE_VERSION}-${CI_COMMIT_SHORT_SHA},secret.mongoPassword=${MONGO_PASSWORD},secret.mongoUser=${MONGO_USER} --values ${PATH_TO_CHART}/${VALUES_NAME} --namespace=${K8S_NAMESPACE}
+#     - echo '{"Deployments":[{"ResourceName":"'${IMAGE_PROJECT}'","Namespace":"'${K8S_NAMESPACE}'"}]}' | kubedog multitrack --output-prefix=" "
+#   artifacts:
+#     paths:
+#       - .ci_status/
+#   tags:
+#     - kubernetes
+#     - production

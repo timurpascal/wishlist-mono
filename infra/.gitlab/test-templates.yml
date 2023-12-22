@@ -1,0 +1,9 @@
+---
+.test_template:
+  image: node:${NODE_VERSION}-alpine
+  tags:
+    - docker
+    - htz
+  stage: test
+  script:
+    - yarn ${APP_TYPE}:test:ci

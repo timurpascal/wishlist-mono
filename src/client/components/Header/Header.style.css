@@ -1,0 +1,9 @@
+.header {
+  margin-bottom: 12px;
+  display: flex;
+}
+
+.header__search {
+  width: 100%;
+  /* position: relative; */
+}

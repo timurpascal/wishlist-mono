@@ -1,0 +1,4 @@
+roles:
+  - name: geerlingguy.docker
+  - name: sbaerlocher.telegraf
+  - name: riemers.gitlab-runner

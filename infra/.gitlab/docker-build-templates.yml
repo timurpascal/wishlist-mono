@@ -1,0 +1,88 @@
+---
+.docker_build_template_arm:
+  stage: docker-build
+  image: docker:dind
+  variables:
+    DOCKER_DRIVER: overlay2
+    DOCKER_TLS_CERTDIR: '/certs'
+    BUILDX_VERSION: 0.6.1
+  tags:
+    - docker
+    - htz
+  before_script:
+    - START=$(date +%s)
+    - docker login -u "${REGISTRY_USER}" -p "${REGISTRY_PASS}" "https://${REGISTRY_URL}"
+    - apk update
+    - apk add jq curl
+    - mkdir -vp ~/.docker/cli-plugins/
+    - curl --silent -L "https://github.com/docker/buildx/releases/download/v${BUILDX_VERSION}/buildx-v${BUILDX_VERSION}.linux-amd64" > ~/.docker/cli-plugins/docker-buildx
+    - chmod a+x ~/.docker/cli-plugins/docker-buildx
+    - 'curl -XPOST ${SLACK_HOOK_URL} --data "{\"text\": \"Собираем докер образ ${APP_NAME} на arm\"}"'
+    - IMAGE_VERSION=$(cat package.json | jq -r '.version' )
+    - VERSION=${IMAGE_VERSION}-${CI_COMMIT_SHORT_SHA}
+    - NODE_VOLTA_VERSION=$(cat package.json | jq -r '.volta.node' )
+    - jq --arg version "$VERSION" '.version = $version' package.json > temp
+    - mv temp package.json
+    - jq --arg engine "$NODE_VOLTA_VERSION" '.engines.node = $engine' package.json > temp
+    - mv temp package.json
+  script:
+    - docker info
+    - docker buildx build --progress plain --platform linux/arm64 --build-arg NODE_VERSION=${NODE_VERSION} -t "${REGISTRY_URL}/${APP_NAME}-arm:latest" -f "Dockerfile.${APP_TYPE}" .
+    - docker tag ${REGISTRY_URL}/${APP_NAME}-arm:latest ${REGISTRY_URL}/${APP_NAME}-arm:${VERSION}
+    - IMAGES_SIZE=$(docker images --format "{{.Size}}" "${REGISTRY_URL}/${APP_NAME}-arm:latest")
+    - 'curl -XPOST ${SLACK_HOOK_URL} --data "{\"text\": \"Образ ${APP_NAME} c версией ${VERSION} на arm - успешно собран, вес сборки ${IMAGES_SIZE}\"}"'
+    - docker push ${REGISTRY_URL}/${APP_NAME}-arm:latest
+    - docker push ${REGISTRY_URL}/${APP_NAME}-arm:${VERSION}
+    - 'curl -XPOST ${SLACK_HOOK_URL} --data "{\"text\": \"Образ ${APP_NAME} на arm - запушен в registry, версия = ${VERSION}\"}"'
+    - echo ${VERSION} > state
+    - curl --user "raw_user:${NEXUS_PASSWORD}" --upload-file ./state https://${NEXUS_URL}/repository/raw/wishlist/ci/state
+    - END=$(date +%s);
+    - BUILD_TIME=$(echo $((END-START)) | awk '{print int($1/60)":"int($1%60)}')
+    - 'curl -XPOST ${SLACK_HOOK_URL} --data "{\"text\": \"Сборка ${APP_NAME} на arm заняла ${BUILD_TIME} min:sec \"}"'
+  after_script:
+    - docker system prune -af
+    - docker logout ${REGISTRY_URL}
+  cache:
+    - key:
+        files:
+          - yarn.lock
+      paths:
+        - .yarn-cache/
+
+.docker_build_template_86:
+  stage: docker-build
+  image: docker:dind
+  variables:
+    DOCKER_DRIVER: overlay2
+    DOCKER_TLS_CERTDIR: '/certs'
+  tags:
+    - docker
+    - htz
+  before_script:
+    - START=$(date +%s)
+    - apk update
+    - apk add jq curl
+    - docker login -u "${REGISTRY_USER}" -p "${REGISTRY_PASS}" "https://${REGISTRY_URL}"
+    - 'curl -XPOST ${SLACK_HOOK_URL} --data "{\"text\": \"Собираем докер образ ${APP_NAME} на x86\"}"'
+    - IMAGE_VERSION=$(cat package.json | jq -r '.version' )
+    - NODE_VOLTA_VERSION=$(cat package.json | jq -r '.volta.node' )
+    - VERSION=${IMAGE_VERSION}-${CI_COMMIT_SHORT_SHA}
+    - jq --arg version "$VERSION" '.version = $version' package.json > .temp
+    - mv temp package.json
+    - jq --arg engine "$NODE_VOLTA_VERSION" '.engines.node = $engine' package.json > temp
+    - mv temp package.json
+  script:
+    - docker build --build-arg NODE_VERSION=${NODE_VERSION} -t ${REGISTRY_URL}/${APP_NAME}:latest -f Dockerfile.${APP_TYPE} .
+    - docker tag ${REGISTRY_URL}/${APP_NAME}:latest ${REGISTRY_URL}/${APP_NAME}:${VERSION}
+    - IMAGES_SIZE=$(docker images --format "{{.Size}}" "${REGISTRY_URL}/${APP_NAME}:latest")
+    - 'curl -XPOST ${SLACK_HOOK_URL} --data "{\"text\": \"Образ ${APP_NAME} c версией ${VERSION} на x86 - успешно собран, вес сборки ${IMAGES_SIZE}\"}"'
+    - docker push ${REGISTRY_URL}/${APP_NAME}:latest
+    - docker push ${REGISTRY_URL}/${APP_NAME}:${VERSION}
+    - 'curl -XPOST ${SLACK_HOOK_URL} --data "{\"text\": \"Образ ${APP_NAME} на x86 - запушен в registry, версия = ${VERSION}\"}"'
+    - echo ${VERSION} > state
+    - curl --user "raw_user:${NEXUS_PASSWORD}" --upload-file ./state https://${NEXUS_URL}/repository/raw/wishlist/ci/state
+    - END=$(date +%s);
+    - BUILD_TIME=$(echo $((END-START)) | awk '{print int($1/60)":"int($1%60)}')
+    - 'curl -XPOST ${SLACK_HOOK_URL} --data "{\"text\": \"Сборка ${APP_NAME} на arm заняла ${BUILD_TIME} min:sec \"}"'
+  after_script:
+    - docker logout ${REGISTRY_URL}

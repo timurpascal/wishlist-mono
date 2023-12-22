@@ -1,0 +1,36 @@
+---
+- name: Update all packages to their latest version
+  apt:
+    name: '*'
+    state: latest
+  tags:
+    - update
+
+- name: install updates
+  apt:
+    pkg: '{{ package_list }}'
+    update_cache: yes
+
+- name: Remove dependencies that are no longer required
+  apt:
+    autoremove: yes
+  tags:
+    - update
+
+# - name: Ports opened
+#   ansible.posix.firewalld:
+#     port: '{{ item }}'
+#     permanent: yes
+#     state: enabled
+#   with_items: '{{ port_opened }}'
+
+# - name: reload service firewalld
+#   systemd:
+#     name: firewalld
+#     state: reloaded
+
+- name: Add my love alias
+  blockinfile:
+    path: /root/.bashrc
+    block: '{{ alias_block }}'
+    marker: '# {mark} ALIAS ANSIBLE MANAGED BLOCK'

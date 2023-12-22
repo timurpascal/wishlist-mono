@@ -1,0 +1,15 @@
+{
+  "collection": "@nestjs/schematics",
+  "sourceRoot": "src/server",
+  "compilerOptions": {
+    "tsConfigPath": "tsconfig.server.json",
+    "plugins": [
+      {
+        "name": "@nestjs/swagger/plugin",
+        "options": {
+          "classValidatorShim": true
+        }
+      }
+    ]
+  }
+}

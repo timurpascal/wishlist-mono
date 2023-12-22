@@ -1,0 +1,32 @@
+.gift-modal {
+  width 100vw
+  max-width 1000px
+  position relative
+
+  &__control {
+    position absolute
+    bottom -82px
+    width 100%
+  }
+}
+
+.control {
+  display flex
+  justify-content center
+
+  &__button {
+    cursor pointer
+    color white
+    opacity .3
+    transition opacity .15s ease-in-out
+    padding 16px
+
+    &:hover {
+      opacity 100
+    }
+
+    &__icon {
+      font-size 32px
+    }
+  }
+}

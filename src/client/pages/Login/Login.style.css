@@ -1,0 +1,22 @@
+.wrapper {
+  padding-top: 10%;
+}
+
+.button_wrapper {
+  display: flex;
+  justify-content: center;
+}
+
+.title {
+  text-align: center;
+}
+
+.last-row {
+  margin-bottom: 0;
+}
+
+.link-wrapper {
+  margin-top: 12px;
+  text-align: center;
+  width: 100%;
+}

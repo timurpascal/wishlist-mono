@@ -1,0 +1,34 @@
+# Build args
+ARG NODE_VERSION
+ARG PORT=3000
+
+# build contaiter
+FROM node:${NODE_VERSION}-alpine AS build
+
+RUN mkdir -p /usr/app
+WORKDIR /usr/app
+COPY package*.json yarn.* /usr/app/
+RUN yarn install --cache-folder .yarn-cache --frozen-lockfile --ignore-scripts --network-timeout 100000
+COPY . /usr/app/
+RUN yarn server:build
+
+# # Deps install (yarn install all deps in cache ~=700mb)
+FROM node:${NODE_VERSION}-alpine AS deps
+
+RUN mkdir -p /usr/app
+WORKDIR /usr/app
+COPY package*.json yarn.* /usr/app/
+RUN yarn install --cache-folder .yarn-cache --ignore-scripts --production --network-timeout 100000
+
+# run contaier
+FROM node:${NODE_VERSION}-alpine
+
+ARG NODE_ENV=production
+ENV NODE_ENV=${NODE_ENV}
+RUN mkdir -p /usr/app
+WORKDIR /usr/app
+COPY --from=deps /usr/app/node_modules /usr/app/node_modules
+COPY --from=build /usr/app/dist/ /usr/app/
+
+EXPOSE ${PORT}
+CMD [ "node", "src/server/main.js"]

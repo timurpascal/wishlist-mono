@@ -1,0 +1,10 @@
+---
+- hosts: gitlab
+  vars_files:
+    - secrets.yml
+  roles:
+    - install_packages
+    - geerlingguy.docker
+    - sbaerlocher.telegraf
+    - fix_telegraf
+    - riemers.gitlab-runner

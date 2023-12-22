@@ -1,0 +1,41 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "lib": ["dom"],
+    "declaration": true,
+    "removeComments": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "target": "ESNext",
+    "sourceMap": true,
+    "outDir": "./dist",
+    "baseUrl": "./",
+    "incremental": true,
+    "resolveJsonModule": true,
+    "skipDefaultLibCheck": true,
+    "skipLibCheck": true,
+    "jsx": "react",
+    /*
+      Strict mode
+    */
+    "strict": false,
+    // "noImplicitAny": true,
+    // "noImplicitThis": true,
+    // "alwaysStrict": true,
+    // "strictBindCallApply": true,
+    // "strictNullChecks": true,
+    // "strictFunctionTypes": true,
+    // "strictPropertyInitialization": true,
+    // "forceConsistentCasingInFileNames": true,
+    "paths": {
+      "@services/*": ["src/client/services/*"],
+      "@api/*": ["src/client/api/*"],
+      "@contexts/*": ["src/client/contexts/*"],
+      "@pages/*": ["src/client/pages/*"],
+      "@routes/*": ["src/client/routes/*"],
+      "@components/*": ["src/client/components/*"],
+      "@constants/*": ["src/client/constants/*"]
+    }
+  }
+}

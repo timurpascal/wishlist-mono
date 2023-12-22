@@ -1,0 +1,12 @@
+.list-item {
+  display: flex;
+}
+
+.list-item__button {
+  opacity: 0;
+  transition: .25;
+}
+
+.list-item:hover .list-item__button {
+  opacity: 1;
+}
